@@ -50,19 +50,25 @@ jobs:
       - name: Run tests
         run: go test ./... -race
 
-      - name: Build binary (linux/amd64)
+      - name: Build binaries (linux/amd64, linux/arm64)
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-            go build \
-              -ldflags="-s -w -X main.version=${{ steps.version.outputs.tag }}" \
-              -o rcon-cli \
-              ./cmd/rcon-cli/
+          for arch in amd64 arm64; do
+            CGO_ENABLED=0 GOOS=linux GOARCH="${arch}" \
+              go build \
+                -ldflags="-s -w -X main.version=${{ steps.version.outputs.tag }}" \
+                -o "rcon-cli-linux-${arch}" \
+                ./cmd/rcon-cli/
+          done
 
-      - name: Create release archive
+      - name: Create release archives
         run: |
-          tar czf rcon-cli-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz \
-            rcon-cli \
-            README.md
+          for arch in amd64 arm64; do
+            cp "rcon-cli-linux-${arch}" rcon-cli
+            tar czf "rcon-cli_${{ steps.version.outputs.tag }}_linux_${arch}.tar.gz" \
+              rcon-cli \
+              README.md
+            rm rcon-cli
+          done
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -70,8 +76,8 @@ jobs:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ${{ steps.version.outputs.tag }}
           files: |
-            rcon-cli-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz
-            rcon-cli
+            rcon-cli_${{ steps.version.outputs.tag }}_linux_amd64.tar.gz
+            rcon-cli_${{ steps.version.outputs.tag }}_linux_arm64.tar.gz
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
