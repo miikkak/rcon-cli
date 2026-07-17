@@ -18,5 +18,11 @@ repos:
     rev: v0.5.1
     hooks:
       - id: go-fmt
-      - id: go-vet-mod
-      - id: golangci-lint-mod
+  - repo: local
+    hooks:
+      - id: go-vet
+        name: go vet
+        entry: go vet ./...
+        language: system
+        types: [go]
+        pass_filenames: false
