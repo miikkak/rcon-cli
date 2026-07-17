@@ -103,7 +103,7 @@ jobs:
 
       - name: Set up Go
         if: runner.environment == 'github-hosted'
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
           cache: true
