@@ -22,10 +22,10 @@ func Start(hostPort, password string, out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("connecting to RCON server: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	lineEditor := liner.NewLiner()
-	defer lineEditor.Close()
+	defer func() { _ = lineEditor.Close() }()
 
 	for {
 		cmd, err := lineEditor.Prompt("> ")
@@ -45,11 +45,15 @@ func Start(hostPort, password string, out io.Writer) error {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-			fmt.Fprintln(os.Stderr, "Failed to execute command:", err)
+			if _, werr := fmt.Fprintln(os.Stderr, "Failed to execute command:", err); werr != nil {
+				return fmt.Errorf("writing to stderr: %w", werr)
+			}
 			continue
 		}
 
-		fmt.Fprintln(out, colorize(resp))
+		if _, err := fmt.Fprintln(out, colorize(resp)); err != nil {
+			return fmt.Errorf("writing response: %w", err)
+		}
 		lineEditor.AppendHistory(cmd)
 	}
 }
@@ -62,13 +66,15 @@ func Execute(hostPort, password string, out io.Writer, command ...string) error 
 	if err != nil {
 		return fmt.Errorf("connecting to RCON server: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	resp, err := conn.Execute(strings.Join(command, " "))
 	if err != nil {
 		return fmt.Errorf("executing command: %w", err)
 	}
 
-	fmt.Fprintln(out, colorize(resp))
+	if _, err := fmt.Fprintln(out, colorize(resp)); err != nil {
+		return fmt.Errorf("writing response: %w", err)
+	}
 	return nil
 }

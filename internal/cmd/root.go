@@ -65,7 +65,9 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		viper.SetConfigName(".rcon-cli") // name of config file (without extension)
-		viper.AddConfigPath("$HOME")
+		if home, err := os.UserHomeDir(); err == nil {
+			viper.AddConfigPath(home)
+		}
 		viper.AddConfigPath("/data")
 		viper.AddConfigPath("/server")
 	}
