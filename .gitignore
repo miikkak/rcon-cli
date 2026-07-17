@@ -1,0 +1,7 @@
+/rcon-cli
+/rcon-cli.exe
+/dist/
+*.tar.gz
+*.swp
+.DS_Store
+node_modules/
