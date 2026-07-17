@@ -1,0 +1,77 @@
+---
+name: Release
+
+on: # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy (e.g., v1.2.3)"
+        required: true
+        type: string
+
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event_name == 'workflow_dispatch' && inputs.tag || github.ref
+    }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build and Release
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.0
+
+      - name: Set up Go
+        if: runner.environment == 'github-hosted'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run tests
+        run: go test ./... -race
+
+      - name: Build binary (linux/amd64)
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build \
+              -ldflags="-s -w -X main.version=${{ steps.version.outputs.tag }}" \
+              -o rcon-cli \
+              ./cmd/rcon-cli/
+
+      - name: Create release archive
+        run: |
+          tar czf rcon-cli-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz \
+            rcon-cli \
+            README.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          files: |
+            rcon-cli-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz
+            rcon-cli
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
