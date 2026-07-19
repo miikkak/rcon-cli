@@ -9,7 +9,10 @@ import (
 	"github.com/miikkak/rcon-cli/internal/cmd"
 )
 
+var version = "dev"
+
 func main() {
+	cmd.RootCmd.Version = version
 	if err := cmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
