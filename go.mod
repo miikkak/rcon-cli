@@ -1,6 +1,6 @@
 module github.com/miikkak/rcon-cli
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/gorcon/rcon v1.4.0
