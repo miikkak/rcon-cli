@@ -21,5 +21,5 @@ jobs:
       test-runner: '["self-hosted","linux","x64"]'
       code-paths: >-
         '**/*.go', 'go.mod', 'go.sum', '.github/workflows/**',
-        '.pre-commit-config.yaml', '.releaserc.json'
+        '.pre-commit-config.yaml'
       language-setup: go
