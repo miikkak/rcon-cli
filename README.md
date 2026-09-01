@@ -9,6 +9,15 @@ formatting codes (`§x§R§R§G§G§B§B`, used by e.g. BlueMap) and built on th
 actively maintained [gorcon/rcon](https://github.com/gorcon/rcon) client
 library instead of the unmaintained `james4k/rcon`.
 
+## About this project
+
+This was built with heavy Claude Code assistance — most of the implementation
+is AI-generated, with the design and review driven by me. It has unit test
+coverage (see Testing below) and runs as the RCON client in my own production
+Minecraft server stack ([mc-server-container](https://github.com/miikkak/mc-server-container)),
+so it sees real day-to-day use, not just its own test suite. Read the source
+and file issues if something looks off.
+
 ## Usage
 
 Without any additional arguments, the CLI starts an interactive session
