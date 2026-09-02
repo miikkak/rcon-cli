@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // sectionSign is Minecraft's formatting-code prefix character.
@@ -23,14 +24,14 @@ var colors = map[rune]string{
 	'5': "\x1b[35m", // dark purple
 	'6': "\x1b[33m", // gold
 	'7': "\x1b[37m", // gray
-	'8': "\x1b[30m", // dark gray
-	'9': "\x1b[34m", // blue
-	'a': "\x1b[32m", // green
-	'b': "\x1b[32m", // aqua
-	'c': "\x1b[31m", // red
-	'd': "\x1b[35m", // light purple
-	'e': "\x1b[33m", // yellow
-	'f': "\x1b[37m", // white
+	'8': "\x1b[90m", // dark gray
+	'9': "\x1b[94m", // blue
+	'a': "\x1b[92m", // green
+	'b': "\x1b[96m", // aqua
+	'c': "\x1b[91m", // red
+	'd': "\x1b[95m", // light purple
+	'e': "\x1b[93m", // yellow
+	'f': "\x1b[97m", // white
 	'k': "",         // random
 	'm': "\x1b[9m",  // strikethrough
 	'o': "\x1b[3m",  // italic
@@ -61,6 +62,7 @@ func colorize(str string) string {
 	var out strings.Builder
 	out.Grow(len(str))
 
+	formatted := false
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
 		if r != sectionSign {
@@ -78,22 +80,31 @@ func colorize(str string) string {
 			if hex, ok := parseTrueColor(runes, i); ok {
 				out.WriteString(trueColorEscape(hex))
 				i += 13 // §x + 6×(§h) = 14 runes total; loop's i++ covers the 14th
+				formatted = true
 				continue
 			}
 			out.WriteRune(r)
 			continue
 		}
 
-		if ansi, ok := colors[next]; ok {
+		if ansi, ok := colors[unicode.ToLower(next)]; ok {
 			out.WriteString(ansi)
 			i++
+			formatted = true
 			continue
 		}
 
 		out.WriteRune(r)
 	}
 
-	return strings.ReplaceAll(out.String(), "\n", "\n"+reset)
+	if !formatted {
+		return out.String()
+	}
+
+	// Reset at every line break so formatting doesn't bleed across lines, and
+	// again at the very end so it doesn't bleed into whatever gets printed
+	// after this response (e.g. the next REPL prompt).
+	return strings.ReplaceAll(out.String(), "\n", "\n"+reset) + reset
 }
 
 // parseTrueColor checks runes[start:] for §x§h§h§h§h§h§h (start points at
