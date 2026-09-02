@@ -66,6 +66,9 @@ func colorize(str string) string {
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
 		if r != sectionSign {
+			if isStrippableControl(r) {
+				continue
+			}
 			out.WriteRune(r)
 			continue
 		}
@@ -132,6 +135,19 @@ func parseTrueColor(runes []rune, start int) (hex string, ok bool) {
 	}
 
 	return b.String(), true
+}
+
+// isStrippableControl reports whether r is a control byte with no place in
+// terminal output — server responses (chat messages, item/player names) are
+// untrusted, and a raw ESC or other control byte here could otherwise be
+// used to inject terminal escape sequences (OSC title/clipboard tricks,
+// cursor manipulation). \n and \t are left alone since they're meaningful
+// formatting, not an attack surface.
+func isStrippableControl(r rune) bool {
+	if r == '\n' || r == '\t' {
+		return false
+	}
+	return (r < 0x20) || r == 0x7f || (r >= 0x80 && r <= 0x9f)
 }
 
 func isHexDigit(r rune) bool {

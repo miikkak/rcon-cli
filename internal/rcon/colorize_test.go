@@ -75,6 +75,16 @@ func TestColorize(t *testing.T) {
 			input: "§zfoo",
 			want:  "§zfoo",
 		},
+		{
+			name:  "raw escape byte is stripped",
+			input: "foo\x1b]0;pwned\x07bar",
+			want:  "foo]0;pwnedbar",
+		},
+		{
+			name:  "newline and tab preserved",
+			input: "foo\n\tbar",
+			want:  "foo\n\tbar",
+		},
 	}
 
 	for _, tt := range tests {
