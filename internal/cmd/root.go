@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -35,7 +37,7 @@ and the CLI will exit.
 		password := viper.GetString("password")
 
 		if len(args) == 0 {
-			return rcon.Start(hostPort, password, os.Stdout)
+			return rcon.Start(hostPort, password, os.Stdout, os.Stderr)
 		}
 		return rcon.Execute(hostPort, password, os.Stdout, args...)
 	},
@@ -76,7 +78,16 @@ func initConfig() {
 	viper.SetEnvPrefix("rcon")
 	viper.AutomaticEnv() // read in environment variables that match
 
-	// If a config file is found, read it in.
-	// Indicates viper.ConfigFileNotFoundError if no config file is provided, which is fine
-	_ = viper.ReadInConfig()
+	// If a config file is found, read it in. A missing config file is fine
+	// when we're only searching default locations, but any other error
+	// (malformed YAML, an explicit --config pointing at a bad path) should
+	// stop the CLI rather than silently falling back to defaults.
+	if err := viper.ReadInConfig(); err != nil {
+		var notFound viper.ConfigFileNotFoundError
+		if cfgFile == "" && errors.As(err, &notFound) {
+			return
+		}
+		fmt.Fprintln(os.Stderr, "Error reading config file:", err)
+		os.Exit(1)
+	}
 }

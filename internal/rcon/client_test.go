@@ -23,7 +23,7 @@ func TestExecute_Success(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	want := "\x1b[32mok \x1b[38;2;255;0;0mred\n"
+	want := "\x1b[92mok \x1b[38;2;255;0;0mred" + reset + "\n"
 	if buf.String() != want {
 		t.Errorf("Execute() output = %q, want %q", buf.String(), want)
 	}
